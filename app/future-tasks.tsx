@@ -141,8 +141,11 @@ export default function FutureTasksScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [subtaskModalVisible, setSubtaskModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<{ id: number; text: string; isSubtask?: boolean; parentId?: number } | null>(null);
   const [editText, setEditText] = useState('');
+  const [subtaskText, setSubtaskText] = useState('');
+  const [currentTaskId, setCurrentTaskId] = useState<number | null>(null);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -287,27 +290,22 @@ export default function FutureTasksScreen() {
   };
 
   const addSubtask = async (taskId: number) => {
-    Alert.prompt(
-      'Add Subtask',
-      'Subtask?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Add',
-          onPress: async (subtaskText) => {
-            if (subtaskText && subtaskText.trim()) {
-              try {
-                await dbOperations.subtasks.createSubtask(taskId, subtaskText.trim());
-                await loadTasks();
-              } catch (error) {
-                console.error('Error adding subtask:', error);
-              }
-            }
-          },
-        },
-      ],
-      'plain-text'
-    );
+    setCurrentTaskId(taskId);
+    setSubtaskModalVisible(true);
+  };
+
+  const saveSubtask = async () => {
+    if (!subtaskText.trim() || !currentTaskId) return;
+
+    try {
+      await dbOperations.subtasks.createSubtask(currentTaskId, subtaskText.trim());
+      setSubtaskModalVisible(false);
+      setSubtaskText('');
+      setCurrentTaskId(null);
+      await loadTasks();
+    } catch (error) {
+      console.error('Error adding subtask:', error);
+    }
   };
 
   const calculateProgress = (task: Task) => {
@@ -419,6 +417,42 @@ export default function FutureTasksScreen() {
                 onPress={saveEdit}
               >
                 <Text style={styles.buttonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Subtask Modal */}
+      <Modal visible={subtaskModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Subtask</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={subtaskText}
+              onChangeText={setSubtaskText}
+              placeholder="Enter subtask text..."
+              placeholderTextColor="#888"
+              multiline
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setSubtaskModalVisible(false);
+                  setSubtaskText('');
+                  setCurrentTaskId(null);
+                }}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={saveSubtask}
+              >
+                <Text style={styles.buttonText}>Add</Text>
               </TouchableOpacity>
             </View>
           </View>
