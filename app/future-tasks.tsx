@@ -3,7 +3,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -142,6 +141,12 @@ export default function FutureTasksScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [subtaskModalVisible, setSubtaskModalVisible] = useState(false);
+  const [deleteTaskModalVisible, setDeleteTaskModalVisible] = useState(false);
+  const [deleteSubtaskModalVisible, setDeleteSubtaskModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
+  const [subtaskToDelete, setSubtaskToDelete] = useState<{ subtaskId: number; taskId: number } | null>(null);
   const [editingTask, setEditingTask] = useState<{ id: number; text: string; isSubtask?: boolean; parentId?: number } | null>(null);
   const [editText, setEditText] = useState('');
   const [subtaskText, setSubtaskText] = useState('');
@@ -170,7 +175,8 @@ export default function FutureTasksScreen() {
 
   const addFutureTask = async () => {
     if (!futureInputText.trim()) {
-      Alert.alert('Error', 'Enter task text!');
+      setErrorMessage('Enter task text!');
+      setErrorModalVisible(true);
       return;
     }
 
@@ -182,7 +188,8 @@ export default function FutureTasksScreen() {
       await loadTasks();
     } catch (error) {
       console.error('Error adding future task:', error);
-      Alert.alert('Error', 'Failed to add future task');
+      setErrorMessage('Failed to add future task');
+      setErrorModalVisible(true);
     }
   };
 
@@ -220,48 +227,40 @@ export default function FutureTasksScreen() {
   };
 
   const deleteTask = async (taskId: number) => {
-    Alert.alert(
-      'Delete Task',
-      'Delete this task?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await dbOperations.tasks.deleteTask(taskId);
-              await loadTasks();
-            } catch (error) {
-              console.error('Error deleting task:', error);
-            }
-          },
-        },
-      ]
-    );
+    setTaskToDelete(taskId);
+    setDeleteTaskModalVisible(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+
+    try {
+      await dbOperations.tasks.deleteTask(taskToDelete);
+      await loadTasks();
+      setDeleteTaskModalVisible(false);
+      setTaskToDelete(null);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
   const deleteSubtask = async (subtaskId: number, taskId: number) => {
-    Alert.alert(
-      'Delete Subtask',
-      'Delete this subtask?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await dbOperations.subtasks.deleteSubtask(subtaskId);
-              await dbOperations.combined.checkAndUpdateParentCompletion(taskId);
-              await loadTasks();
-            } catch (error) {
-              console.error('Error deleting subtask:', error);
-            }
-          },
-        },
-      ]
-    );
+    setSubtaskToDelete({ subtaskId, taskId });
+    setDeleteSubtaskModalVisible(true);
+  };
+
+  const confirmDeleteSubtask = async () => {
+    if (!subtaskToDelete) return;
+
+    try {
+      await dbOperations.subtasks.deleteSubtask(subtaskToDelete.subtaskId);
+      await dbOperations.combined.checkAndUpdateParentCompletion(subtaskToDelete.taskId);
+      await loadTasks();
+      setDeleteSubtaskModalVisible(false);
+      setSubtaskToDelete(null);
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
+    }
   };
 
   const openEditModal = (id: number, text: string, isSubtask = false, parentId?: number) => {
@@ -473,6 +472,93 @@ export default function FutureTasksScreen() {
                 <Text style={styles.buttonText}>Add</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Task Modal */}
+      <Modal visible={deleteTaskModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.deleteModalHeader}>
+              <Ionicons name="warning" size={24} color="#ef4444" />
+              <Text style={styles.modalTitle}>Delete Task</Text>
+            </View>
+            <Text style={styles.deleteModalText}>
+              Are you sure you want to delete this task? This action cannot be undone.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setDeleteTaskModalVisible(false);
+                  setTaskToDelete(null);
+                }}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
+                onPress={confirmDeleteTask}
+              >
+                <Ionicons name="trash" size={16} color="#ffffff" style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Subtask Modal */}
+      <Modal visible={deleteSubtaskModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.deleteModalHeader}>
+              <Ionicons name="warning" size={24} color="#ef4444" />
+              <Text style={styles.modalTitle}>Delete Subtask</Text>
+            </View>
+            <Text style={styles.deleteModalText}>
+              Are you sure you want to delete this subtask? This action cannot be undone.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setDeleteSubtaskModalVisible(false);
+                  setSubtaskToDelete(null);
+                }}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
+                onPress={confirmDeleteSubtask}
+              >
+                <Ionicons name="trash" size={16} color="#ffffff" style={styles.buttonIcon} />
+                <Text style={styles.buttonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Error Modal */}
+      <Modal visible={errorModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.deleteModalHeader}>
+              <Ionicons name="alert-circle" size={24} color="#ef4444" />
+              <Text style={styles.modalTitle}>Error</Text>
+            </View>
+            <Text style={styles.deleteModalText}>
+              {errorMessage}
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.saveButton]}
+              onPress={() => setErrorModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>OK</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -748,7 +834,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#f5f5f5',
     textAlign: 'center',
-    marginBottom: 20,
     letterSpacing: 0.5,
   },
   modalInput: {
@@ -791,5 +876,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontStyle: 'italic',
     marginLeft: 8,
+  },
+  deleteModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  deleteModalText: {
+    fontSize: 16,
+    color: '#e2e8f0',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  deleteButton: {
+    backgroundColor: '#ef4444',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });
