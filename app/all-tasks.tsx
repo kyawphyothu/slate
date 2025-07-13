@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -322,8 +324,18 @@ export default function AllTasksScreen() {
   const completedTasks = todayTasks.filter(t => t.completed);
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        alwaysBounceVertical={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.sectionTitle}>All Tasks (Today)</Text>
 
         <View style={styles.taskSection}>
@@ -469,7 +481,7 @@ export default function AllTasksScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -477,7 +489,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0a0a0a',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   sectionTitle: {
     fontSize: 24,
