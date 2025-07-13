@@ -105,10 +105,10 @@ export default function HomeScreen() {
             placeholder="Add today's task..."
             placeholderTextColor="#888"
           />
+          <TouchableOpacity style={styles.inputButton} onPress={addTask}>
+            <Ionicons name="add" size={20} color="#ffffff" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.inputButton} onPress={addTask}>
-          <Ionicons name="add" size={20} color="#ffffff" />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.statsContainer}>
@@ -188,7 +188,6 @@ const styles = StyleSheet.create({
   },
   todoForm: {
     marginBottom: 30,
-    gap: 12,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -216,28 +215,29 @@ const styles = StyleSheet.create({
   },
   inputButton: {
     backgroundColor: '#8b0000',
-    padding: 16,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#8b0000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-    minWidth: 56,
+    shadowRadius: 4,
+    elevation: 4,
+    marginLeft: 8,
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
     marginBottom: 30,
     gap: 12,
   },
   statCard: {
+    minWidth: 100,
     flex: 1,
     backgroundColor: '#1e293b',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#334155',
@@ -248,13 +248,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   statIconContainer: {
-    marginBottom: 12,
-    padding: 8,
+    marginBottom: 8,
+    padding: 6,
     borderRadius: 12,
     backgroundColor: '#0f172a',
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: '#f8fafc',
     marginBottom: 4,
