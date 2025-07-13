@@ -1,8 +1,10 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -136,7 +138,8 @@ function TaskItem({
 export default function FutureTasksScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [futureInputText, setFutureInputText] = useState('');
-  const [futureDateInput, setFutureDateInput] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<{ id: number; text: string; isSubtask?: boolean; parentId?: number } | null>(null);
   const [editText, setEditText] = useState('');
@@ -163,19 +166,27 @@ export default function FutureTasksScreen() {
   };
 
   const addFutureTask = async () => {
-    if (!futureInputText.trim() || !futureDateInput) {
-      Alert.alert('Error', 'Enter text and pick a date!');
+    if (!futureInputText.trim()) {
+      Alert.alert('Error', 'Enter task text!');
       return;
     }
 
     try {
-      await dbOperations.tasks.createTask(futureInputText.trim(), futureDateInput);
+      const dateString = selectedDate.toISOString().slice(0, 10);
+      await dbOperations.tasks.createTask(futureInputText.trim(), dateString);
       setFutureInputText('');
-      setFutureDateInput('');
+      setSelectedDate(new Date());
       await loadTasks();
     } catch (error) {
       console.error('Error adding future task:', error);
       Alert.alert('Error', 'Failed to add future task');
+    }
+  };
+
+  const onDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (date) {
+      setSelectedDate(date);
     }
   };
 
@@ -320,13 +331,27 @@ export default function FutureTasksScreen() {
             placeholder="Add Future Task"
             placeholderTextColor="#888"
           />
-          <TextInput
-            style={styles.futureDateInput}
-            value={futureDateInput}
-            onChangeText={setFutureDateInput}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor="#888"
-          />
+          <TouchableOpacity 
+            style={styles.datePickerButton} 
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text style={styles.datePickerText}>
+              Date: {selectedDate.toLocaleDateString()}
+            </Text>
+          </TouchableOpacity>
+          
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={onDateChange}
+              minimumDate={new Date()}
+              textColor="#f5f5f5"
+              themeVariant="dark"
+            />
+          )}
+          
           <TouchableOpacity style={styles.futureAddButton} onPress={addFutureTask}>
             <Text style={styles.buttonText}>Add</Text>
           </TouchableOpacity>
@@ -440,6 +465,18 @@ const styles = StyleSheet.create({
     borderColor: '#555',
     borderRadius: 5,
     backgroundColor: '#1a1a1a',
+    color: '#f5f5f5',
+    fontSize: 16,
+  },
+  datePickerButton: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#555',
+    borderRadius: 5,
+    backgroundColor: '#1a1a1a',
+    alignItems: 'center',
+  },
+  datePickerText: {
     color: '#f5f5f5',
     fontSize: 16,
   },
