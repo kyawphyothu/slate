@@ -57,11 +57,11 @@ function TaskItem({
     <View style={[styles.taskItem, isCompleted && styles.completedTaskItem]}>
       <View style={styles.taskHeader}>
         <TouchableOpacity
-          style={styles.checkbox}
+          style={[styles.checkbox, task.completed && styles.checkedCheckbox]}
           onPress={() => onToggleTask(task.id, !task.completed)}
         >
           {task.completed ? (
-            <Ionicons name="checkmark" size={16} color="#f5f5f5" />
+            <Ionicons name="checkmark" size={16} color="#ffffff" />
           ) : null}
         </TouchableOpacity>
         
@@ -73,14 +73,14 @@ function TaskItem({
           style={styles.iconBtn}
           onPress={() => onEditTask(task.id, task.text)}
         >
-          <Ionicons name="create-outline" size={16} color="#f5f5f5" />
+          <Ionicons name="create-outline" size={16} color="#ffffff" />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.iconBtn}
           onPress={() => onDeleteTask(task.id)}
         >
-          <Ionicons name="trash-outline" size={16} color="#f5f5f5" />
+          <Ionicons name="trash-outline" size={16} color="#ffffff" />
         </TouchableOpacity>
 
         {task.subtasks.length > 0 && (
@@ -91,7 +91,7 @@ function TaskItem({
             <Ionicons 
               name={showSubtasks ? "chevron-down" : "chevron-forward"} 
               size={16} 
-              color="#f5f5f5" 
+              color="#ffffff" 
             />
           </TouchableOpacity>
         )}
@@ -100,7 +100,7 @@ function TaskItem({
           style={styles.iconBtn}
           onPress={() => onAddSubtask(task.id)}
         >
-          <Ionicons name="add" size={16} color="#f5f5f5" />
+          <Ionicons name="add" size={16} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -109,11 +109,11 @@ function TaskItem({
           {task.subtasks.map(subtask => (
             <View key={subtask.id} style={styles.subtaskItem}>
               <TouchableOpacity
-                style={styles.checkbox}
+                style={[styles.subtaskCheckbox, subtask.completed && styles.checkedSubtaskCheckbox]}
                 onPress={() => onToggleSubtask(subtask.id, !subtask.completed, task.id)}
               >
                 {subtask.completed ? (
-                  <Ionicons name="checkmark" size={14} color="#f5f5f5" />
+                  <Ionicons name="checkmark" size={12} color="#ffffff" />
                 ) : null}
               </TouchableOpacity>
               
@@ -121,19 +121,21 @@ function TaskItem({
                 {subtask.text}
               </Text>
 
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => onEditTask(subtask.id, subtask.text, true, task.id)}
-              >
-                <Ionicons name="create-outline" size={14} color="#f5f5f5" />
-              </TouchableOpacity>
+              <View style={styles.subtaskActions}>
+                <TouchableOpacity
+                  style={styles.subtaskActionButton}
+                  onPress={() => onEditTask(subtask.id, subtask.text, true, task.id)}
+                >
+                  <Ionicons name="create-outline" size={12} color="#ffffff" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => onDeleteSubtask(subtask.id, task.id)}
-              >
-                <Ionicons name="trash-outline" size={14} color="#f5f5f5" />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.subtaskActionButton}
+                  onPress={() => onDeleteSubtask(subtask.id, task.id)}
+                >
+                  <Ionicons name="trash-outline" size={12} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
         </View>
@@ -386,12 +388,14 @@ export default function AllTasksScreen() {
             style={styles.bottomButton} 
             onPress={() => router.push('/future-tasks')}
           >
+            <Ionicons name="calendar" size={20} color="#ffffff" style={styles.buttonIcon} />
             <Text style={styles.buttonText}>View Future Tasks</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.bottomButton} 
             onPress={() => router.back()}
           >
+            <Ionicons name="home" size={20} color="#ffffff" style={styles.buttonIcon} />
             <Text style={styles.buttonText}>Back to Home</Text>
           </TouchableOpacity>
         </View>
@@ -478,7 +482,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#f5f5f5',
+    color: '#f8fafc',
     textAlign: 'center',
     marginBottom: 30,
     letterSpacing: 1,
@@ -582,6 +586,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
+  checkedCheckbox: {
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
+  },
   checkboxText: {
     color: '#f1f5f9',
     fontSize: 16,
@@ -630,6 +638,26 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 8,
     paddingVertical: 4,
+    backgroundColor: '#475569',
+    padding: 10,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#6366f1',
+  },
+  subtaskCheckbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 2,
+    borderColor: '#64748b',
+    borderRadius: 4,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  checkedSubtaskCheckbox: {
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   subtaskText: {
     flex: 1,
@@ -639,26 +667,45 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     letterSpacing: 0.1,
   },
+  subtaskActions: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  subtaskActionButton: {
+    backgroundColor: '#6366f1',
+    padding: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 28,
+    minHeight: 28,
+  },
   bottomButtons: {
     gap: 15,
     marginTop: 30,
   },
   bottomButton: {
-    backgroundColor: '#64748b',
+    backgroundColor: '#8b0000',
     padding: 18,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowColor: '#8b0000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    color: '#f1f5f9',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.5,
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   modalOverlay: {
     flex: 1,
