@@ -3,6 +3,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+  Dimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown';
 import { dbOperations } from '../db/operations';
 
 interface Subtask {
@@ -50,8 +52,54 @@ function TaskItem({
   calculateProgress: (task: Task) => string | null;
 }) {
   const [showSubtasks, setShowSubtasks] = useState(false);
+  const screenWidth = Dimensions.get('window').width;
+  const isMobile = screenWidth < 768;
   const progress = calculateProgress(task);
   const title = progress ? `${task.text} (${progress})` : task.text;
+
+  const taskActions = [
+    { label: 'Complete', value: 'complete', icon: 'checkmark' },
+    { label: 'Edit', value: 'edit', icon: 'create' },
+    { label: 'Delete', value: 'delete', icon: 'trash' },
+    { label: 'Add Subtask', value: 'addSubtask', icon: 'add' },
+  ];
+
+  const subtaskActions = [
+    { label: 'Complete', value: 'complete', icon: 'checkmark' },
+    { label: 'Edit', value: 'edit', icon: 'create' },
+    { label: 'Delete', value: 'delete', icon: 'trash' },
+  ];
+
+  const handleTaskAction = (action: string) => {
+    switch (action) {
+      case 'complete':
+        onToggleTask(task.id, !task.completed);
+        break;
+      case 'edit':
+        onEditTask(task.id, task.text);
+        break;
+      case 'delete':
+        onDeleteTask(task.id);
+        break;
+      case 'addSubtask':
+        onAddSubtask(task.id);
+        break;
+    }
+  };
+
+  const handleSubtaskAction = (action: string, subtaskId: number, subtaskText: string) => {
+    switch (action) {
+      case 'complete':
+        onToggleSubtask(subtaskId, !task.subtasks.find(s => s.id === subtaskId)?.completed, task.id);
+        break;
+      case 'edit':
+        onEditTask(subtaskId, subtaskText, true, task.id);
+        break;
+      case 'delete':
+        onDeleteSubtask(subtaskId, task.id);
+        break;
+    }
+  };
 
   return (
     <View style={styles.taskItem}>
@@ -68,36 +116,79 @@ function TaskItem({
           {title}
         </Text>
         <Text style={styles.dateText}>({task.date})</Text>
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={() => onEditTask(task.id, task.text)}
-        >
-          <Ionicons name="create-outline" size={16} color="#f5f5f5" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={() => onDeleteTask(task.id)}
-        >
-          <Ionicons name="trash-outline" size={16} color="#f5f5f5" />
-        </TouchableOpacity>
-        {task.subtasks.length > 0 && (
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => setShowSubtasks(!showSubtasks)}
-          >
-            <Ionicons
-              name={showSubtasks ? "chevron-down" : "chevron-forward"}
-              size={16}
-              color="#f5f5f5"
-            />
-          </TouchableOpacity>
+        
+        {/* Desktop/Tablet Actions */}
+        {!isMobile && (
+          <>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => onEditTask(task.id, task.text)}
+            >
+              <Ionicons name="create-outline" size={16} color="#f5f5f5" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => onDeleteTask(task.id)}
+            >
+              <Ionicons name="trash-outline" size={16} color="#f5f5f5" />
+            </TouchableOpacity>
+            {task.subtasks.length > 0 && (
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => setShowSubtasks(!showSubtasks)}
+              >
+                <Ionicons
+                  name={showSubtasks ? "chevron-down" : "chevron-forward"}
+                  size={16}
+                  color="#f5f5f5"
+                />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => onAddSubtask(task.id)}
+            >
+              <Ionicons name="add" size={16} color="#f5f5f5" />
+            </TouchableOpacity>
+          </>
         )}
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={() => onAddSubtask(task.id)}
-        >
-          <Ionicons name="add" size={16} color="#f5f5f5" />
-        </TouchableOpacity>
+
+        {/* Mobile Dropdown */}
+        {isMobile && (
+          <View style={styles.dropdownWrapper}>
+            <Dropdown
+              style={styles.dropdown}
+              containerStyle={styles.dropdownContainer}
+              data={taskActions}
+              labelField="label"
+              valueField="value"
+              placeholder=""
+              value={null}
+              onChange={(item) => handleTaskAction(item.value)}
+              renderRightIcon={() => (
+                <Ionicons name="ellipsis-vertical" size={18} color="#ffffff" />
+              )}
+              renderItem={(item) => (
+                <View style={styles.dropdownItem}>
+                  <Ionicons name={item.icon as any} size={16} color="#ffffff" />
+                  <Text style={styles.dropdownItemText}>{item.label}</Text>
+                </View>
+              )}
+            />
+            {task.subtasks.length > 0 && (
+              <TouchableOpacity
+                style={[styles.iconBtn, { marginLeft: 8 }]}
+                onPress={() => setShowSubtasks(!showSubtasks)}
+              >
+                <Ionicons
+                  name={showSubtasks ? "chevron-down" : "chevron-forward"}
+                  size={16}
+                  color="#f5f5f5"
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
       {showSubtasks && task.subtasks.length > 0 && (
         <View style={styles.subtaskContainer}>
@@ -114,18 +205,49 @@ function TaskItem({
               <Text style={[styles.subtaskText, subtask.completed && styles.completedTaskText]}>
                 {subtask.text}
               </Text>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => onEditTask(subtask.id, subtask.text, true, task.id)}
-              >
-                <Ionicons name="create-outline" size={14} color="#f5f5f5" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => onDeleteSubtask(subtask.id, task.id)}
-              >
-                <Ionicons name="trash-outline" size={14} color="#f5f5f5" />
-              </TouchableOpacity>
+              
+              {/* Desktop/Tablet Subtask Actions */}
+              {!isMobile && (
+                <>
+                  <TouchableOpacity
+                    style={styles.iconBtn}
+                    onPress={() => onEditTask(subtask.id, subtask.text, true, task.id)}
+                  >
+                    <Ionicons name="create-outline" size={14} color="#f5f5f5" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.iconBtn}
+                    onPress={() => onDeleteSubtask(subtask.id, task.id)}
+                  >
+                    <Ionicons name="trash-outline" size={14} color="#f5f5f5" />
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {/* Mobile Subtask Dropdown */}
+              {isMobile && (
+                <View style={styles.dropdownWrapper}>
+                  <Dropdown
+                    style={styles.dropdown}
+                    containerStyle={styles.dropdownContainer}
+                    data={subtaskActions}
+                    labelField="label"
+                    valueField="value"
+                    placeholder=""
+                    value={null}
+                    onChange={(item) => handleSubtaskAction(item.value, subtask.id, subtask.text)}
+                    renderRightIcon={() => (
+                      <Ionicons name="ellipsis-vertical" size={16} color="#ffffff" />
+                    )}
+                    renderItem={(item) => (
+                      <View style={styles.dropdownItem}>
+                        <Ionicons name={item.icon as any} size={14} color="#ffffff" />
+                        <Text style={styles.dropdownItemText}>{item.label}</Text>
+                      </View>
+                    )}
+                  />
+                </View>
+              )}
             </View>
           ))}
         </View>
@@ -896,5 +1018,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  dropdownWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dropdown: {
+    backgroundColor: '#374151',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+    minWidth: 36,
+    maxWidth: 36,
+    borderWidth: 1,
+    borderColor: '#4b5563',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropdownContainer: {
+    backgroundColor: '#1f2937',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#374151',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 8,
+    maxHeight: 200,
+    minWidth: 140,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#374151',
+  },
+  dropdownItemText: {
+    color: '#ffffff',
+    fontSize: 13,
+    marginLeft: 6,
+    fontWeight: '500',
   },
 });
