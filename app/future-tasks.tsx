@@ -259,7 +259,11 @@ function TaskItem({
 export default function FutureTasksScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [futureInputText, setFutureInputText] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [subtaskModalVisible, setSubtaskModalVisible] = useState(false);
@@ -306,7 +310,9 @@ export default function FutureTasksScreen() {
       const dateString = selectedDate.toISOString().slice(0, 10);
       await dbOperations.tasks.createTask(futureInputText.trim(), dateString);
       setFutureInputText('');
-      setSelectedDate(new Date());
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setSelectedDate(tomorrow);
       await loadTasks();
     } catch (error) {
       console.error('Error adding future task:', error);
