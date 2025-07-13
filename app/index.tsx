@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -67,6 +68,17 @@ export default function HomeScreen() {
     }
   };
 
+  // Debug function to add yesterday task for testing leftover functionality
+  const addYesterdayTask = async () => {
+    try {
+      await dbOperations.tasks.createTask('Yesterday test task', yesterday);
+      await loadTasks();
+      console.log('Added yesterday task for testing');
+    } catch (error) {
+      console.error('Error adding yesterday task:', error);
+    }
+  };
+
   // Filter functions
   const getTodayTasks = () => tasks.filter(task => task.date === today);
   const getLeftoverTasks = () => tasks.filter(task => task.date === yesterday && !task.completed);
@@ -80,41 +92,71 @@ export default function HomeScreen() {
     <ScrollView style={styles.summaryView}>
       <View style={styles.header}>
         <Text style={styles.title}>To Do List</Text>
+        <Text style={styles.subtitle}>Stay organized, stay productive</Text>
       </View>
 
       <View style={styles.todoForm}>
-        <TextInput
-          style={styles.inputBox}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Add Today's Task"
-          placeholderTextColor="#888"
-        />
+        <View style={styles.inputContainer}>
+          <Ionicons name="create-outline" size={20} color="#6366f1" style={styles.inputIcon} />
+          <TextInput
+            style={styles.inputBox}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Add today's task..."
+            placeholderTextColor="#888"
+          />
+        </View>
         <TouchableOpacity style={styles.inputButton} onPress={addTask}>
-          <Text style={styles.buttonText}>Add</Text>
+          <Ionicons name="add" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.counterContainer}>
-        <Text style={styles.counterText}>
-          Completed: <Text style={styles.counterNumber}>{completedCount}</Text> | 
-          Uncompleted: <Text style={styles.counterNumber}>{uncompletedCount}</Text>
-        </Text>
+      <View style={styles.statsContainer}>
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Ionicons name="checkmark-circle" size={24} color="#10b981" />
+          </View>
+          <Text style={styles.statNumber}>{completedCount}</Text>
+          <Text style={styles.statLabel}>Completed</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Ionicons name="time" size={24} color="#6366f1" />
+          </View>
+          <Text style={styles.statNumber}>{uncompletedCount}</Text>
+          <Text style={styles.statLabel}>Pending</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <View style={styles.statIconContainer}>
+            <Ionicons name="calendar" size={24} color="#3b82f6" />
+          </View>
+          <Text style={styles.statNumber}>{leftoverTasks.length}</Text>
+          <Text style={styles.statLabel}>Leftover</Text>
+        </View>
       </View>
 
       {todayTasks.some(t => !t.completed) && (
-        <Text style={styles.reminderMessage}>You assigned some tasks for today!</Text>
+        <View style={styles.reminderCard}>
+          <Ionicons name="notifications" size={20} color="#6366f1" />
+          <Text style={styles.reminderMessage}>You have tasks to complete today!</Text>
+        </View>
       )}
 
       {leftoverTasks.length > 0 && (
-        <Text style={styles.leftoverMessage}>Leftover from yesterday!</Text>
+        <View style={styles.leftoverCard}>
+          <Ionicons name="warning" size={20} color="#ef4444" />
+          <Text style={styles.leftoverMessage}>Unfinished tasks from yesterday</Text>
+        </View>
       )}
 
       <TouchableOpacity 
         style={styles.showListButton} 
         onPress={() => router.push('/all-tasks')}
       >
-        <Text style={styles.buttonText}>Show All Tasks</Text>
+        <Ionicons name="list" size={20} color="#ffffff" style={styles.buttonIcon} />
+        <Text style={styles.buttonText}>View All Tasks</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -123,74 +165,172 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   summaryView: {
     flex: 1,
-    backgroundColor: '#0d0d0d',
+    backgroundColor: '#0a0a0a',
     padding: 20,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 40,
+    paddingVertical: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#f5f5f5',
-    marginBottom: 20,
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#f8fafc',
+    marginBottom: 8,
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#94a3b8',
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
   todoForm: {
-    flexDirection: 'row',
     marginBottom: 30,
-    gap: 10,
+    gap: 12,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   inputBox: {
     flex: 1,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#555',
-    borderRadius: 5,
-    fontSize: 18,
-    backgroundColor: '#1a1a1a',
-    color: '#f5f5f5',
+    padding: 16,
+    fontSize: 16,
+    color: '#f8fafc',
+    fontWeight: '500',
   },
   inputButton: {
     backgroundColor: '#8b0000',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 5,
+    padding: 16,
+    borderRadius: 12,
     justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#8b0000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    minWidth: 56,
   },
-  buttonText: {
-    color: '#f5f5f5',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+    gap: 12,
   },
-  counterContainer: {
-    marginBottom: 20,
+  statCard: {
+    flex: 1,
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  counterText: {
-    color: '#f5f5f5',
-    fontSize: 16,
-    textAlign: 'center',
+  statIconContainer: {
+    marginBottom: 12,
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#0f172a',
   },
-  counterNumber: {
-    fontWeight: 'bold',
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#f8fafc',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#94a3b8',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  reminderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#6366f1',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   reminderMessage: {
-    color: '#f5f5f5',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginBottom: 10,
+    color: '#f8fafc',
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 12,
+    flex: 1,
+  },
+  leftoverCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   leftoverMessage: {
-    color: '#ff6b6b',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginBottom: 10,
+    color: '#f8fafc',
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 12,
+    flex: 1,
   },
   showListButton: {
     backgroundColor: '#8b0000',
-    padding: 15,
-    borderRadius: 5,
-    marginTop: 30,
+    padding: 18,
+    borderRadius: 12,
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#8b0000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });
