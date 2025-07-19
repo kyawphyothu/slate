@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TO-DO List</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  
+  <div id="summary-view">
+    <div id="header">
+      <h1>To Do List</h1>
+    </div>
+
+    <div id="todo-form">
+      <input type="text" class="input-item" id="input-box" placeholder="Add Today's Task" />
+      <button id="input-button">Add</button>
+    </div>
+
+    <div class="counter-container">
+      Completed: <span id="completed-counter">0</span> | Uncompleted: <span id="uncompleted-counter">0</span>
+    </div>
+
+    <div id="reminder-message"></div>
+    <div id="yesterday-leftover-message"></div>
+    <div id="today-task-list"></div>
+
+    <button id="show-list-button">Show All Tasks</button>
+  </div>
+
+  <!-- ALL TASKS VIEW -->
+  <div id="detail-view" style="display: none;">
+    <h2>All Tasks (Today)</h2>
+
+    <div class="task-section">
+      <div class="section-header">
+        <h3>Uncompleted Tasks</h3>
+      </div>
+      <div id="uncompleted-message"></div>
+      <ul id="uncompleted-list" class="task-list"></ul>
+    </div>
+
+    <div class="task-section">
+      <div class="section-header">
+        <h3>Completed Tasks</h3>
+        <button id="delete-all-completed" class="section-action">Delete All Completed</button>
+      </div>
+      <div id="completed-message"></div>
+      <ul id="completed-list" class="task-list"></ul>
+    </div>
+
+    <div class="bottom-buttons">
+      <button id="view-future-button">View Future Tasks</button>
+      <button id="back-button">Back to Home</button>
+    </div>
+  </div>
+
+  <!-- FUTURE TASKS VIEW -->
+  <div id="future-view" style="display: none;">
+    <h2>Future Assigned Tasks</h2>
+
+    <div id="future-form" class="future-form">
+      <input type="text" id="future-input" placeholder="Add Future Task" />
+      <input type="date" id="future-date-input" />
+      <button id="future-add-button">Add</button>
+    </div>
+
+    <div class="task-section">
+      <div class="section-header">
+        <h3>Future Task List</h3>
+      </div>
+      <ul id="future-task-list" class="task-list"></ul>
+    </div>
+
+    <div class="bottom-buttons">
+      <button id="back-to-all-button">Back to All Tasks</button>
+    </div>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
